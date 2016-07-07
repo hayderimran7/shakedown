@@ -5,7 +5,7 @@ from dcos import (cosmospackage, subcommand)
 from dcoscli.package.main import _get_cosmos_url
 
 import shakedown
-
+from shakedown import *
 
 def _get_options(options_file=None):
     """ Read in options_file as JSON.
@@ -257,3 +257,32 @@ def remove_package_repo(
 
     cosmos = _get_cosmos()
     return cosmos.remove_repo(repo_name)
+
+def delete_zk_node(
+    zk_path
+):
+    """Delete Zookeeper node
+        :param zk_path: path in zookeeper to remove (Without the leading /)
+    """
+    return delete_framework_cruft(None, None, zk_path)
+
+def delete_framework_cruft(
+    role,
+    principal,
+    zk_path
+):
+    """Delete framework cruft in mesos after an uninstall such as zk nodes
+
+        :param role: name of the role used for reservations
+        :param principal: name of the principal used for reservations or security
+        :param zk_path: path in zookeeper to remove (Without the leading /)
+    """
+    janitor_cmd = 'docker run mesosphere/janitor:verbose /janitor.py'
+    if role and principal:
+        janitor_cmd += ' --role={} --principal={}'.format(role, principal)
+    if zk_path:
+        janitor_cmd += ' --zk_path={}'.format(zk_path)
+    auth_token = dcos_acs_token()
+    if auth_token:
+        janitor_cmd += ' --auth_token={}'.format(auth_token)
+    run_command_on_master(janitor_cmd)
