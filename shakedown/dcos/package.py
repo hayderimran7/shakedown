@@ -167,6 +167,9 @@ def uninstall_package(
 
     cosmos = _get_cosmos()
     pkg = cosmos.get_package_version(package_name, None)
+    if app_id is None:
+        app_id = vars(pkg)['_config_json']['properties']['service']['properties']['name']['default']
+
 
     # Uninstall subcommands (if defined)
     if pkg.has_cli_definition():
@@ -181,7 +184,7 @@ def uninstall_package(
         future = now + timeout_sec
 
         while now < future:
-            if not shakedown.get_service(package_name):
+            if not shakedown.get_service(app_id):
                 return True
 
             time.sleep(1)
